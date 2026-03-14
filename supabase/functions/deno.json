@@ -1,0 +1,6 @@
+{
+    "imports": {
+        "hono": "npm:hono@^4.0.0",
+        "hono/": "npm:hono/"
+    }
+}
