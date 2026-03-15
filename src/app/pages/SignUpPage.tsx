@@ -35,7 +35,7 @@ const CLUB_CATEGORIES = [
 
 export function SignUpPage() {
   const navigate = useNavigate();
-  const { login, signUp } = useAuth();
+  const { signUp } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
@@ -82,82 +82,58 @@ export function SignUpPage() {
     if (accountType) setStep(2);
   };
 
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [error, setError] = useState("");
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const now = Date.now();
+    setError("");
+    setIsSigningUp(true);
 
     try {
+      let profile: Partial<Student | Faculty | Club> = {};
+
       if (accountType === "student") {
-        const newStudent: Student = {
-          id: `s_${now}`,
+        profile = {
           type: "student",
           name: name.trim(),
-          email: email.trim(),
-          avatarInitials: name
-            .trim()
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase(),
+          avatarInitials: name.trim().split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
           university: university.trim(),
           major: major.trim(),
           year,
           bio: bio.trim(),
           skills,
           credibilityScore: 100,
-          projectsCompleted: 0,
-          activeProjects: 0,
-          avgRating: 0,
-          hoursLogged: 0,
         };
-        await signUp(newStudent);
       } else if (accountType === "faculty") {
-        const newFaculty: Faculty = {
-          id: `f_${now}`,
+        profile = {
           type: "faculty",
           name: name.trim(),
-          email: email.trim(),
-          avatarInitials: name
-            .trim()
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase(),
+          avatarInitials: name.trim().split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
           university: university.trim(),
           department: department.trim(),
           title: title.trim(),
           researchAreas,
-          projectsPosted: 0,
           bio: facultyBio.trim(),
         };
-        await signUp(newFaculty);
       } else if (accountType === "club") {
-        const newClub: Club = {
-          id: `c_${now}`,
+        profile = {
           type: "club",
           name: name.trim(),
-          email: email.trim(),
-          avatarInitials: name
-            .trim()
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 3)
-            .toUpperCase(),
+          avatarInitials: name.trim().split(" ").map(n => n[0]).join("").slice(0, 3).toUpperCase(),
           university: clubUniversity.trim(),
           category: clubCategory,
           description: clubDescription.trim(),
-          members: 1,
-          projectsPosted: 0,
-          foundedYear: new Date().getFullYear(),
         };
-        await signUp(newClub);
       }
+
+      await signUp(email.trim(), password, profile);
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Signup failed", err);
+      setError(err.message || "Signup failed. Please try again.");
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
@@ -176,6 +152,11 @@ export function SignUpPage() {
             </div>
             <span className="text-2xl font-semibold">CampusQuest</span>
           </Link>
+          {error && (
+            <div className="flex items-center gap-2 bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg border border-destructive/20 mx-auto max-w-sm">
+              <p>{error}</p>
+            </div>
+          )}
         </div>
 
         <Card className="w-full p-8 rounded-xl border border-border bg-white/90 backdrop-blur-sm shadow-xl">
@@ -605,8 +586,8 @@ export function SignUpPage() {
                 </>
               )}
 
-              <Button type="submit" className="w-full rounded-lg" size="lg">
-                Create Account & Continue
+              <Button type="submit" className="w-full rounded-lg" size="lg" disabled={isSigningUp}>
+                {isSigningUp ? "Creating account..." : "Create Account & Continue"}
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">

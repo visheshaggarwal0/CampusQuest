@@ -1,2 +1,27 @@
+# Dependencies
 node_modules
-utils/supabase/info.ts
+.pnpm-debug.log*
+
+# Build
+dist
+dist-ssr
+*.local
+
+# Environment
+.env
+.env.local
+.env.*.local
+utils/supabase/info.tsx
+
+# IDE
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db

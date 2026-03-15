@@ -35,8 +35,7 @@ const categoryColors: Record<string, string> = {
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login, allStudents, allFaculty, allClubs } = useAuth();
-
+  const { signIn, allStudents, allFaculty, allClubs } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,34 +43,30 @@ export function LoginPage() {
   const [quickTab, setQuickTab] = useState<QuickLoginTab>("students");
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Find user by email across all mock data
-  const findUserByEmail = (emailVal: string): CurrentUser | null => {
-    const s = allStudents.find((u) => u.email.toLowerCase() === emailVal.toLowerCase());
-    if (s) return s;
-    const f = allFaculty.find((u) => u.email.toLowerCase() === emailVal.toLowerCase());
-    if (f) return f;
-    const c = allClubs.find((u) => u.email.toLowerCase() === emailVal.toLowerCase());
-    if (c) return c;
-    return null;
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const user = findUserByEmail(email);
-    if (user) {
-      login(user);
+    setIsLoggingIn(true);
+
+    try {
+      await signIn(email, password);
       navigate("/dashboard");
-    } else {
-      setError("No account found with that email. Try the Quick Login below.");
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      setError(err.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  const handleQuickLogin = (user: CurrentUser) => {
-    login(user);
+  const handleQuickLogin = async (user: CurrentUser) => {
+    setEmail(user.email);
+    setPassword("password123");
     setShowQuickLogin(false);
-    navigate("/dashboard");
+    // Advise the user to try signing in with password123 
+    // or notify them that they need to create auth credentials first.
   };
 
   const filteredStudents = allStudents.filter(
@@ -159,8 +154,8 @@ export function LoginPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full rounded-lg" size="lg">
-                Log In
+              <Button type="submit" className="w-full rounded-lg" size="lg" disabled={isLoggingIn}>
+                {isLoggingIn ? "Logging in..." : "Log In"}
               </Button>
             </form>
 
@@ -223,8 +218,8 @@ export function LoginPage() {
                     key={key}
                     onClick={() => setQuickTab(key)}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-colors border-b-2 ${quickTab === key
-                        ? "border-primary text-primary"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                       }`}
                   >
                     <Icon className="w-3.5 h-3.5" />

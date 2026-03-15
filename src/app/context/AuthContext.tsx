@@ -13,9 +13,9 @@ export type CurrentUser = Student | Faculty | Club;
 
 interface AuthContextType {
   currentUser: CurrentUser | null;
-  login: (user: CurrentUser) => void;
-  signUp: (user: CurrentUser) => Promise<void>;
-  logout: () => void;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, profile: Partial<CurrentUser>) => Promise<void>;
+  logout: () => Promise<void>;
   switchAccount: (user: CurrentUser) => void;
   updateProfile: (updates: Partial<Student & Faculty & Club>) => void;
   addProject: (project: Project) => void;
@@ -118,69 +118,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // 1. Fetch initial session
     const initAuth = async () => {
-      await fetchData();
-      const savedUserId = localStorage.getItem('cq_userId');
-      const savedUserType = localStorage.getItem('cq_userType');
-
-      if (savedUserId && savedUserType) {
-        // Find user in fetched data
-        let user: CurrentUser | undefined;
-        if (savedUserType === 'student') user = allStudents.find(s => s.id === savedUserId);
-        else if (savedUserType === 'faculty') user = allFaculty.find(f => f.id === savedUserId);
-        else if (savedUserType === 'club') user = allClubs.find(c => c.id === savedUserId);
-
-        if (user) setCurrentUser(user);
-        else setCurrentUser(allStudents[0] || null);
-      } else {
-        setCurrentUser(allStudents[0] || null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await handleAuthSession(session.user.id);
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
+
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        try {
+          await handleAuthSession(session.user.id);
+        } catch (err) {
+          console.error("Auth session update error:", err);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
     initAuth();
-  }, [isLoading]);
+    fetchData();
 
-  const login = (user: CurrentUser) => {
-    setCurrentUser(user);
-    localStorage.setItem('cq_userId', user.id);
-    localStorage.setItem('cq_userType', user.type);
-  };
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-  const signUp = async (user: CurrentUser) => {
-    const table = user.type === 'student' ? 'students' : user.type === 'faculty' ? 'faculty' : 'clubs';
+  const handleAuthSession = async (userId: string) => {
+    try {
+      // Try to find user in any table
+      const [
+        { data: student },
+        { data: faculty },
+        { data: club }
+      ] = await Promise.all([
+        supabase.from('students').select('*').eq('id', userId).maybeSingle(),
+        supabase.from('faculty').select('*').eq('id', userId).maybeSingle(),
+        supabase.from('clubs').select('*').eq('id', userId).maybeSingle()
+      ]);
 
-    // Map data to DB fields
-    const dbUser: any = { ...user };
-    dbUser.avatar_initials = user.avatarInitials;
-
-    if (user.type === 'student') {
-      dbUser.credibility_score = (user as Student).credibilityScore;
-      dbUser.projects_completed = (user as Student).projectsCompleted;
-      dbUser.active_projects = (user as Student).activeProjects;
-      dbUser.avg_rating = (user as Student).avgRating;
-      dbUser.hours_logged = (user as Student).hoursLogged;
-    } else if (user.type === 'faculty') {
-      dbUser.research_areas = (user as Faculty).researchAreas;
-      dbUser.projects_posted = (user as Faculty).projectsPosted;
-    } else if (user.type === 'club') {
-      dbUser.projects_posted = (user as Club).projectsPosted;
-      dbUser.founded_year = (user as Club).foundedYear;
-    }
-
-    const { error } = await supabase.from(table).insert(dbUser);
-    if (!error) {
-      await fetchData();
-      login(user);
-    } else {
-      console.error('Error signing up:', error);
-      throw error;
+      if (student) setCurrentUser({ ...student, avatarInitials: student.avatar_initials, credibilityScore: student.credibility_score, projectsCompleted: student.projects_completed, activeProjects: student.active_projects, avgRating: student.avg_rating, hoursLogged: student.hours_logged });
+      else if (faculty) setCurrentUser({ ...faculty, avatarInitials: faculty.avatar_initials, researchAreas: faculty.research_areas, projectsPosted: faculty.projects_posted });
+      else if (club) setCurrentUser({ ...club, avatarInitials: club.avatar_initials, projectsPosted: club.projects_posted, foundedYear: club.founded_year });
+    } catch (err) {
+      console.error("Error setting handleAuthSession:", err);
     }
   };
 
-  const logout = () => {
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string, profile: Partial<CurrentUser>) => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    if (!data.user) throw new Error("Sign up failed");
+
+    const userId = data.user.id;
+    const table = profile.type === 'student' ? 'students' : profile.type === 'faculty' ? 'faculty' : 'clubs';
+
+    const dbUser: any = { ...profile, id: userId, email };
+    if (profile.avatarInitials) dbUser.avatar_initials = profile.avatarInitials;
+
+    if (profile.type === 'student') {
+      const s = profile as Student;
+      dbUser.credibility_score = s.credibilityScore || 0;
+      dbUser.projects_completed = 0;
+      dbUser.active_projects = 0;
+      dbUser.avg_rating = 0;
+      dbUser.hours_logged = 0;
+    } else if (profile.type === 'faculty') {
+      const f = profile as Faculty;
+      dbUser.research_areas = f.researchAreas || [];
+      dbUser.projects_posted = 0;
+    } else if (profile.type === 'club') {
+      const c = profile as Club;
+      dbUser.projects_posted = 0;
+      dbUser.founded_year = c.foundedYear || new Date().getFullYear();
+    }
+
+    const { error: profileError } = await supabase.from(table).insert(dbUser);
+    if (profileError) throw profileError;
+
+    await fetchData();
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setCurrentUser(null);
-    localStorage.removeItem('cq_userId');
-    localStorage.removeItem('cq_userType');
   };
 
   const switchAccount = (user: CurrentUser) => {
@@ -328,7 +363,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         currentUser,
-        login,
+        signIn,
         signUp,
         logout,
         switchAccount,
