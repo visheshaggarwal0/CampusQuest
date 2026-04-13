@@ -1,49 +1,105 @@
-# CampusQuest
+# 🎓 CampusQuest
 
-CampusQuest is a modern platform designed to connect university students with faculty and student-run clubs for micro-internships, projects, and collaboration.
+![CampusQuest Banner](./public/banner.png)
 
-## ✨ Features
+**CampusQuest** is a state-of-the-art collaboration platform designed to bridge the gap between students, faculty, and campus clubs. By facilitating micro-internships and project-based learning, it empowers students to build professional portfolios while solving real-world campus challenges.
 
-- **Micro-Internships**: Discover and apply to short-term projects that build your resume.
-- **Credibility System**: Earn points and ratings for every project you complete.
-- **Unified Dashboard**: Personalized views for Students, Faculty, and Clubs.
-- **Admin Control**: Centralized dashboard to manage accounts and project integrity.
-- **Supabase Powered**: High-performance real-time database and secure authentication.
+---
+
+## 🌟 Key Features
+
+### 🚀 Student Empowerment
+- **Micro-Internships**: Discover high-impact, short-term projects across various departments.
+- **Credibility System**: A gamified experience where students earn points and ratings for successful completions.
+- **Dynamic Portfolio**: Automatically track and showcase your contributions to recruiters.
+
+### 🏛 Faculty & Club Integration
+- **Project Hosting**: Easily post and manage micro-internships.
+- **Talent Discovery**: Find the right student skills for your specific needs.
+- **Performance Analytics**: Real-time insights into project progress and student engagement.
+
+### 🛡 Administrative Control
+- **Integrity Management**: Centralized dashboard to oversee accounts and ensure project quality.
+- **Role-Based Access**: Secure, tiered permissions for Students, Faculty, and Admins.
+
+---
+
+## 🛠 Tech Stack
+
+CampusQuest is built using a modern, enterprise-grade technology stack:
+
+| Component | Technology |
+| :--- | :--- |
+| **Frontend Framework** | [React 19](https://react.dev/) + [Vite 6](https://vitejs.dev/) |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) (Beta) |
+| **Animations** | [Framer Motion](https://www.framer.com/motion/) |
+| **UI Components** | [Radix UI](https://www.radix-ui.com/) + [Shadcn UI](https://ui.shadcn.com/) |
+| **Icons** | [Lucide React](https://lucide.dev/) |
+| **Charts** | [Recharts](https://recharts.org/) |
+| **Backend & Database** | [Supabase](https://supabase.com/) (PostgreSQL, Realtime, Auth) |
+| **Routing** | [React Router 7](https://reactrouter.com/) |
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
-- Node.js (v18+)
-- A Supabase Project
+- **Node.js**(v18+)
+- **Supabase**: An active project and access to the SQL Editor.
 
 ### Installation
 
-1. Clone the repository
-2. Install dependencies:
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/visheshaggarwal0/CampusQuest.git
+   cd CampusQuest
+   ```
+
+2. **Install dependencies**:
    ```bash
    npm install
    ```
-3. Set up your Supabase credentials in `utils/supabase/info.tsx`:
+
+3. **Configure Supabase**:
+   Update `utils/supabase/info.tsx` with your credentials:
    ```typescript
    export const projectId = "your-project-id";
    export const publicAnonKey = "your-public-anon-key";
    ```
-4. Run the development server:
+
+4. **Initialize Database**:
+   Run the `supabase_schema.sql` provided in the `supabase/` directory within your Supabase SQL Editor.
+
+5. **Start Development Server**:
    ```bash
    npm run dev
    ```
 
-### Database Setup
+---
 
-To initialize the database, run the `supabase_schema.sql` (found in the brain directory or provided in documentation) in your Supabase SQL Editor.
+## 📂 Project Structure
 
-## 🛠 Tech Stack
-
-- **Frontend**: React, Vite, Tailwind CSS
-- **Icons**: Lucide React
-- **Backend**: Supabase (PostgreSQL, Auth, RLS)
-- **UI Components**: Radix UI, Shadcn/UI (v0)
+```bash
+CampusQuest/
+├── public/          # Static assets
+├── src/
+│   ├── app/
+│   │   ├── components/  # Reusable UI components
+│   │   ├── pages/       # Page-level components (Admin, Profile, Feed, etc.)
+│   │   ├── context/     # React Context for state management
+│   │   └── routes.tsx   # Application routing logic
+│   ├── styles/      # Global CSS and Tailwind directives
+│   └── main.tsx     # Application entry point
+├── supabase/        # Database schemas and migrations
+└── utils/           # Utility functions (Supabase clients, helpers)
+```
 
 ---
-*Built with ❤️ for Campus Collaborators.*
+
+## 🤝 Contributing
+
+We welcome contributions! Whether it's a bug fix, new feature, or documentation improvement, please feel free to open a Pull Request.
+
+---
+
+*Built with ☕ for Campus Collaborators by the CampusQuest Team.*
