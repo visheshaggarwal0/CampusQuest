@@ -1,6 +1,5 @@
 # 🎓 CampusQuest
-
-![CampusQuest Banner](./public/banner.png)
+<img width="1920" height="1080" alt="Screenshot (51)" src="https://github.com/user-attachments/assets/069f4155-3c5e-4ce5-b84f-5132dd5fc923" />
 
 **CampusQuest** is a state-of-the-art collaboration platform designed to bridge the gap between students, faculty, and campus clubs. By facilitating micro-internships and project-based learning, it empowers students to build professional portfolios while solving real-world campus challenges.
 
